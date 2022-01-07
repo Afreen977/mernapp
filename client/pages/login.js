@@ -1,0 +1,117 @@
+import {useState,useContext,useEffect} from 'react'
+import axios from 'axios'
+import {toast} from "react-toastify"
+import "antd/dist/antd.css"
+import Link from 'next/link'
+import {Modal} from "antd"
+import {SyncOutlined} from "@ant-design/icons"
+import AuthForm from '../components/forms/AuthForm'
+import {useRouter } from 'next/router'
+import { UserContext } from '../context'
+
+
+const Login=()=>{
+    const [state,setState]=useContext(UserContext)
+    const router=useRouter()
+    const [email,setEmail]=useState('')
+    const [password,setPassword]=useState('')
+   
+    const [loading,setLoading]=useState(false)
+
+
+
+    const handleSubmit=async(event)=>{
+        event.preventDefault()
+        console.log(email,password)
+     try{
+         setLoading(true)
+         let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                "Access-Control-Allow-Origin": "*",
+            }
+          }
+        const {data}=await axios.post(`/login`,{
+            email,
+            password,
+         
+        })
+     
+        if(data.error){
+            toast.error(data.error)
+            setLoading(false)
+        }
+        else{
+        setState({user:data.user,token:data.token})
+        window.localStorage.setItem('auth',JSON.stringify(data))
+        router.push('/user/dashboard')
+        }
+     }
+
+    catch(err){
+        console.log(
+            "err is",err.data 
+        )
+        toast.error(err)
+        setLoading(false)
+    }
+     
+    }
+    if(state && state.token) router.push('/user/dashboard')
+    return (
+        <div className="container-fluid">
+            <div className="row py-5 text-light bg-defualt-image">
+                <div className="col text-center">
+                    <h1>Login Page</h1>
+                </div>
+            </div>
+            {loading && <h1>Loading...</h1>}
+            <div className="row py-5">
+                <div className="col md-6 offset-md-3">
+                   <AuthForm handleSubmit={handleSubmit}
+                   email={email}
+                   setEmail={setEmail}
+                   password={password}
+                   setPassword={setPassword}
+                   page="login"
+                   loading={loading}
+                   setLoading={setLoading}/>
+                </div>
+            </div>
+          <div className="row">
+              <div className="col">
+                  <Modal title="Congratulations"
+                  visible={false}
+                  onChange={()=>setOk(false)}
+                  footer={null}
+                  >You have successfully registered.
+                  <Link href="/login">
+                      <a className="btn btn-primary btn-sm">Login</a>
+                  </Link>
+                  </Modal>
+              </div>
+          </div>
+          <div className="row">
+              <div className="col">
+                  <p className="text-center">
+                  Not yet registered?{" "}
+                  <Link href="/register">
+                      <a>Register</a>
+                  </Link>
+                  </p>
+              </div>
+          </div>
+          <div className="row">
+              <div className="col">
+                  <p className="text-center">
+                   
+                      <Link href="/forgot-password">
+                          <a className="text-danger">Forgot Password</a>
+                      </Link>
+                  </p>
+              </div>
+          </div>
+        </div>
+    )
+}
+export default Login
